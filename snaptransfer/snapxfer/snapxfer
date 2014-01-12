@@ -1,5 +1,5 @@
 #!/bin/sh
-# http://zpool.org/2013/09/06/zfs-snapshots-and-remote-replication
+# Taken from: http://zpool.org/2013/09/06/zfs-snapshots-and-remote-replication
 # 2013/05/28 - pds - Initial script creation
 #
 
@@ -49,7 +49,7 @@ case ${interval} in
 # take snapshots for asynchronous DR purposes
 for dset in $DATASETS
 do
-$ZSNAP -v  -s -S -a 5M -r $dset >> $LOGFILE
+$ZSNAP -v  -s -S -a 1h -r $dset >> $LOGFILE
 done
 
 # send snapshots to failover host
