@@ -5,10 +5,10 @@ This repository contains script to automate the setup of [SmartOS Global Zones](
 
 `transfer_to_gz.sh` copies _features_ (subfolders) to `/opt/custom`.  E.g. `./transfer_to_gz.sh 192.168.114.130 ssh_authorized_keys snaptransfer/` copies the content of the folders `ssh_authorized_keys`, and `snaptransfer` to `/opt/custom` on `192.168.114.130`.
 
-ssh_authorized_keys
+setup_ssh
 --------------------
 
-Copies `ssh_authorized_keys/setup_ssh/root.ssh/authorized_keys` into `~/root/.ssh` on every boot of the zone.  This is achieved by running an SMF service (`svc:/ssh-key-import-atboot:default`) on each boot.
+Copies all from [setup_ssh/setup_ssh/root.ssh](./setup_ssh/setup_ssh/root.ssh/authorized_keys)  into `~/root/.ssh` on every boot of the zone. [authorized_keys](./setup_ssh/setup_ssh/root.ssh/authorized_keys) is also copied into `/usbkey/config.inc`, this makes SmartOS use it.  This is achieved by running an SMF service (`svc:/ssh-key-import-atboot:default`) on each boot.
 
 __please make sure, that the key in `authorized_keys` is your key, not my key!__
 
