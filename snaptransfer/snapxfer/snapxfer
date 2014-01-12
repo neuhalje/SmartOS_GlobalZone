@@ -58,15 +58,17 @@ function snap_all()
   done
 }
 
-function clean_up {
-
+function clean_up()
+{
         # Perform program exit housekeeping
         rm $LOCKFILE
         exit
 }
 
+
 trap clean_up SIGHUP SIGINT SIGTERM
 
+# Lockfile handling.
 if [ -f $LOCKFILE ]; then
    echo \"$LOCKFILE\" exists, exiting.
    echo Content:
@@ -82,6 +84,7 @@ else
    date >> $LOCKFILE
    echo $0 $@ >> $LOCKFILE
 fi
+# END Lockfile handling.
 
 if [ ! -f $LOGFILE ]; then
   touch $LOGFILE
