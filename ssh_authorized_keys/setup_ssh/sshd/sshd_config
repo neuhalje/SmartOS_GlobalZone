@@ -1,0 +1,86 @@
+Protocol 2
+Port 22
+
+# Don't use reverse DNS for connecting clients
+LookupClientHostnames no
+VerifyReverseMapping no
+
+KbdInteractiveAuthentication no
+
+
+# The default listen address is all interfaces, this may need to be changed
+# if you wish to restrict the interfaces sshd listens on for a multi homed host.
+# Multiple ListenAddress entries are allowed.
+
+# IPv4 only
+#ListenAddress 172.20.0.93
+
+# If port forwarding is enabled (default), specify if the server can bind to
+# INADDR_ANY.
+# This allows the local port forwarding to work when connections are received
+# from any remote host.
+GatewayPorts no
+
+# X11 tunneling options
+X11Forwarding no
+X11DisplayOffset 10
+X11UseLocalhost yes
+
+PrintMotd no
+KeepAlive yes
+
+SyslogFacility auth
+LogLevel info
+
+#
+# Authentication configuration
+#
+
+# Host private key files
+# Must be on a local disk and readable only by the root user (root:sys 600).
+HostKey /var/ssh/ssh_host_rsa_key
+HostKey /var/ssh/ssh_host_dsa_key
+
+# Length of the server key
+# Default 768, Minimum 512
+ServerKeyBits 768
+
+# sshd regenerates the key every KeyRegenerationInterval seconds.
+# The key is never stored anywhere except the memory of sshd.
+# The default is 1 hour (3600 seconds).
+KeyRegenerationInterval 3600
+
+# Ensure secure permissions on users .ssh directory.
+StrictModes yes
+
+# Length of time in seconds before a client that hasn't completed
+# authentication is disconnected.
+# Default is 600 seconds. 0 means no time limit.
+LoginGraceTime 20
+
+# Maximum number of retries for authentication
+# Default is 6. Default (if unset) for MaxAuthTriesLog is MaxAuthTries / 2
+MaxAuthTries    3
+MaxAuthTriesLog 2
+
+# Are logins to accounts with empty passwords allowed.
+# If PermitEmptyPasswords is no, pass PAM_DISALLOW_NULL_AUTHTOK
+# to pam_authenticate(3PAM).
+PermitEmptyPasswords no
+
+# To disable tunneled clear text passwords, change PasswordAuthentication to no.
+PasswordAuthentication no
+
+
+# Are root logins permitted using sshd.
+# Note that sshd uses pam_authenticate(3PAM) so the root (or any other) user
+# maybe denied access by a PAM module regardless of this setting.
+# Valid options are yes, without-password, no.
+PermitRootLogin without-password
+
+# sftp subsystem
+Subsystem       sftp    internal-sftp
+
+# Disable GSS since we don't need it and it slows down login
+GSSAPIAuthentication no
+GSSAPIKeyExchange no
