@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Taken from: http://zpool.org/2013/09/06/zfs-snapshots-and-remote-replication
 # 2013/05/28 - pds - Initial script creation
 #
@@ -26,7 +26,7 @@ ZXFER=/opt/custom/zxfer/zxfer
 
 interval=$1
 
-usage ()
+function usage()
 {
 echo ""
 echo "Usage: $0 (async|hourly|daily|weekly|purge)"
@@ -39,70 +39,74 @@ echo ""
 exit 1
 }
 
+function snap()
+{
+  filesystem=$1
+  keep=$2
+
+  $ZSNAP -v  -s -S -a $keep -r $filesystem >> $LOGFILE
+}
+
+function snap_all()
+{
+  keep=$1
+
+  for dset in $DATASETS
+  do
+     snap $dset $keep
+  done
+}
+
 if [ ! -f $LOGFILE ]; then
-touch $LOGFILE
+  touch $LOGFILE
 fi
 
 case ${interval} in
 
 'async')
 
-# take snapshots for asynchronous DR purposes
-for dset in $DATASETS
-do
-$ZSNAP -v  -s -S -a 1h -r $dset >> $LOGFILE
-done
+        # take snapshots for asynchronous DR purposes
+        snap_all "1h"
 
-# send snapshots to failover host
-for dset in $DATASETS
-do
-$ZXFER -dFv -T root@$DHOST -R $dset $DEST_DATASET >> $LOGFILE
-done
-echo "" >> $LOGFILE
+        # send snapshots to failover host
+        for dset in $DATASETS
+        do
+        $ZXFER -dFv -T root@$DHOST -R $dset $DEST_DATASET >> $LOGFILE
+        done
+        echo "" >> $LOGFILE
 ;;
 
 'hourly')
-# take snapshots, keep for one day
-for dset in $DATASETS
-do
-$ZSNAP -s -S -a 1d -r $dset >> $LOGFILE
-done
-echo "" >> $LOGFILE
+        # take snapshots, keep for one day
+        snap_all "1d"
+        echo "" >> $LOGFILE
 ;;
 
 'daily')
-# take snapshots, keep for one week
-for dset in $DATASETS
-do
-$ZSNAP -s -S -a 1w -r $dset >> $LOGFILE
-done
+        # take snapshots, keep for one week
+        snap_all "1w"
+        echo "" >> $LOGFILE
 
-# purge snapshots according to TTL
-$ZSNAP -s -S -d >> $LOGFILE
-echo "" >> $LOGFILE
+        # purge snapshots according to TTL
+        $ZSNAP -s -S -d >> $LOGFILE
+        echo "" >> $LOGFILE
 ;;
 
 'weekly')
-# take snapshots, keep for one month
-for dset in $DATASETS
-do
-$ZSNAP -v -s -S -a 1m -r $dset >> $LOGFILE
-done
-echo "" >> $LOGFILE
+        # take snapshots, keep for one month
+        snap_all "1m"
+        echo "" >> $LOGFILE
 ;;
 
 'monthly')
 # take snapshots, keep for one year
-for dset in $DATASETS
-do
-$ZSNAP -v -s -S -a 1y -r $dset >> $LOGFILE
-done
-echo "" >> $LOGFILE
+        snap_all "1y"
+        echo "" >> $LOGFILE
 ;;
 
 'purge')
-# purge snapshots according to TTL
-$ZSNAP -v -s -S -d
+        # purge snapshots according to TTL
+        $ZSNAP -v -s -S -d
 ;;
 
 *)
