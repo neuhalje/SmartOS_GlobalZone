@@ -3,7 +3,7 @@
 # 2013/05/28 - pds - Initial script creation
 #
 
-PATH=/usr/xpg4/bin:/usr/bin:/usr/sbin:/smartdc/bin:/opt/local/bin:/opt/local/sbin
+# PATH=/usr/xpg4/bin:/usr/bin:/usr/sbin:/smartdc/bin:/opt/local/bin:/opt/local/sbin
 
 # Local ZFS filesystems that will have snapshot
 # logic applied
@@ -19,6 +19,8 @@ LOGFILE=/var/log/snapxfer.log
 # Tools that help implement snapshot logic and transfer
 ZSNAP=/opt/custom/zfSnap/zfSnap
 ZXFER=/opt/custom/zxfer/zxfer
+
+LOCKFILE=/var/run/snapxfer.lock
 
 ######################################################################
 # Main logic #
@@ -36,7 +38,6 @@ echo "* Hourly snapshots are kept for 1 day"
 echo "* Daily snapshots are kept for one week"
 echo "* Weekly snapshots are kept for one month"
 echo ""
-exit 1
 }
 
 function snap()
@@ -56,6 +57,31 @@ function snap_all()
      snap $dset $keep
   done
 }
+
+function clean_up {
+
+        # Perform program exit housekeeping
+        rm $LOCKFILE
+        exit
+}
+
+trap clean_up SIGHUP SIGINT SIGTERM
+
+if [ -f $LOCKFILE ]; then
+   echo \"$LOCKFILE\" exists, exiting.
+   echo Content:
+   cat $LOCKFILE
+   exit 2
+else
+   echo PID $$ > $LOCKFILE
+   if [ $? -ne 0 ]
+   then
+      echo "Could not create lockfile '$LOCKFILE', aborting"
+      exit 99
+   fi
+   date >> $LOCKFILE
+   echo $0 $@ >> $LOCKFILE
+fi
 
 if [ ! -f $LOGFILE ]; then
   touch $LOGFILE
@@ -114,3 +140,5 @@ usage
 ;;
 
 esac
+
+clean_up
