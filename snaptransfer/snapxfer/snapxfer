@@ -10,7 +10,7 @@ PATH=/usr/xpg4/bin:/usr/bin:/usr/sbin:/smartdc/bin:/opt/local/bin:/opt/local/sbi
 DATASETS="zones"
 
 # Destination host for snapshot replication
-DHOST=192.168.114.130
+DHOST=172.20.0.94
 
 # Output logfile
 LOGFILE=/var/log/snapxfer.log
