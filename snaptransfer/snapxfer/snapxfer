@@ -100,7 +100,12 @@ case ${interval} in
         # send snapshots to failover host
         for dset in $DATASETS
         do
-        $ZXFER -dFv -T root@$DHOST -R $dset $DEST_DATASET >> $LOGFILE
+                if [ "$DHOST" == "localhost" -o "$DHOST" == "" ]
+                then
+                        $ZXFER -dFv -R $dset $DEST_DATASET >> $LOGFILE
+                else
+                        $ZXFER -dFv -T root@$DHOST -R $dset $DEST_DATASET >> $LOGFILE
+                fi
         done
         echo "" >> $LOGFILE
 ;;
