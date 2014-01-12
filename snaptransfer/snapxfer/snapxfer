@@ -8,6 +8,7 @@ PATH=/usr/xpg4/bin:/usr/bin:/usr/sbin:/smartdc/bin:/opt/local/bin:/opt/local/sbi
 # Local ZFS filesystems that will have snapshot
 # logic applied
 DATASETS="zones"
+DEST_DATASET="zbackup/$(hostname)"
 
 # Destination host for snapshot replication
 DHOST=172.20.0.94
@@ -55,7 +56,7 @@ done
 # send snapshots to failover host
 for dset in $DATASETS
 do
-$ZXFER -dFv -T root@$DHOST -R $dset zbackup >> $LOGFILE
+$ZXFER -dFv -T root@$DHOST -R $dset $DEST_DATASET >> $LOGFILE
 done
 echo "" >> $LOGFILE
 ;;
