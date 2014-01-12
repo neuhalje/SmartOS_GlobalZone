@@ -1,0 +1,5 @@
+0,5,10,15,20,25,30,35,40,45,50,55 * * * * /opt/custom/snapxfer/snapxfer async
+3 * * * * /opt/custom/snapxfer/snapxfer hourly
+7 1 * * * /opt/custom/snapxfer/snapxfer daily
+13 3 * * 1 /opt/custom/snapxfer/snapxfer weekly
+17 7 5 * * /opt/custom/snapxfer/snapxfer monthly

@@ -1,0 +1,111 @@
+#!/bin/sh
+# http://zpool.org/2013/09/06/zfs-snapshots-and-remote-replication
+# 2013/05/28 - pds - Initial script creation
+#
+
+PATH=/usr/xpg4/bin:/usr/bin:/usr/sbin:/smartdc/bin:/opt/local/bin:/opt/local/sbin
+
+# Local ZFS filesystems that will have snapshot
+# logic applied
+DATASETS="zones"
+
+# Destination host for snapshot replication
+DHOST=192.168.114.130
+
+# Output logfile
+LOGFILE=/var/log/snapxfer.log
+
+# Tools that help implement snapshot logic and transfer
+ZSNAP=/opt/custom/zfSnap/zfSnap
+ZXFER=/opt/custom/zxfer/zxfer
+
+######################################################################
+# Main logic #
+######################################################################
+
+interval=$1
+
+usage ()
+{
+echo ""
+echo "Usage: $0 (async|hourly|daily|weekly|purge)"
+echo ""
+echo "* Asynchronous DR snapshots are kept for 1 hour"
+echo "* Hourly snapshots are kept for 1 day"
+echo "* Daily snapshots are kept for one week"
+echo "* Weekly snapshots are kept for one month"
+echo ""
+exit 1
+}
+
+if [ ! -f $LOGFILE ]; then
+touch $LOGFILE
+fi
+
+case ${interval} in
+
+'async')
+
+# take snapshots for asynchronous DR purposes
+for dset in $DATASETS
+do
+$ZSNAP -v  -s -S -a 5M -r $dset >> $LOGFILE
+done
+
+# send snapshots to failover host
+for dset in $DATASETS
+do
+$ZXFER -dFv -T root@$DHOST -R $dset zbackup >> $LOGFILE
+done
+echo "" >> $LOGFILE
+;;
+
+'hourly')
+# take snapshots, keep for one day
+for dset in $DATASETS
+do
+$ZSNAP -s -S -a 1d -r $dset >> $LOGFILE
+done
+echo "" >> $LOGFILE
+;;
+
+'daily')
+# take snapshots, keep for one week
+for dset in $DATASETS
+do
+$ZSNAP -s -S -a 1w -r $dset >> $LOGFILE
+done
+
+# purge snapshots according to TTL
+$ZSNAP -s -S -d >> $LOGFILE
+echo "" >> $LOGFILE
+;;
+
+'weekly')
+# take snapshots, keep for one month
+for dset in $DATASETS
+do
+$ZSNAP -v -s -S -a 1m -r $dset >> $LOGFILE
+done
+echo "" >> $LOGFILE
+;;
+
+'monthly')
+# take snapshots, keep for one year
+for dset in $DATASETS
+do
+$ZSNAP -v -s -S -a 1y -r $dset >> $LOGFILE
+done
+echo "" >> $LOGFILE
+;;
+
+'purge')
+# purge snapshots according to TTL
+$ZSNAP -v -s -S -d
+;;
+
+*)
+usage
+;;
+
+esac
