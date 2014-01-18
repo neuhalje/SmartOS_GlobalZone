@@ -20,7 +20,7 @@ LOGFILE=/var/log/snapxfer.log
 ZSNAP=/opt/custom/zfSnap/zfSnap
 ZXFER=/opt/custom/zxfer/zxfer
 
-LOCKFILE=/var/run/snapxfer.lock
+LOCKFILE_PREFIX=/var/run/snapxfer.lock
 
 ######################################################################
 # Main logic #
@@ -48,43 +48,119 @@ function snap()
   $ZSNAP -v  -s -S -a $keep -r $filesystem >> $LOGFILE
 }
 
+function send_all()
+{
+  aquire_lock "send"
+  local lock_error=$?
+
+  if [[ $lock_error != 0 ]]
+  then
+     echo "Skipping sending snapshots; other process is running"
+     return $lock_error
+  fi
+
+  # send snapshots to failover host
+  for dset in $DATASETS
+  do
+    if [ "$DHOST" == "localhost" -o "$DHOST" == "" ]
+    then
+      $ZXFER -dFv -R $dset $DEST_DATASET >> $LOGFILE
+    else
+      $ZXFER -dFv -T root@$DHOST -R $dset $DEST_DATASET >> $LOGFILE
+    fi
+  done
+
+  release_lock "snap"
+}
+
+function purge_old_snaps()
+{
+
+  aquire_lock "snap"
+  local lock_error=$?
+  if [[ $lock_error != 0 ]]
+  then
+    echo "Skipping cleaning up snapshots; other snap process is running"
+    return $lock_error
+  fi
+
+  aquire_lock "send"
+  local lock_error=$?
+  if [[ $lock_error != 0 ]]
+  then
+    echo "Skipping cleaning up snapshots; other send process is running"
+    return $lock_error
+  fi
+        # purge snapshots according to TTL
+        $ZSNAP -v -s -S -d
+
+  release_lock "send"
+  release_lock "snap"
+}
+
 function snap_all()
 {
-  keep=$1
+  local keep=$1
+
+  aquire_lock "snap"
+  local lock_error=$?
+  if [[ $lock_error != 0 ]]
+  then
+    echo "Skipping taking snapshots; other process is running"
+    return $lock_error
+  fi
 
   for dset in $DATASETS
   do
      snap $dset $keep
   done
+
+  release_lock "snap"
 }
 
 function clean_up()
 {
         # Perform program exit housekeeping
-        rm $LOCKFILE
+        release_lock "snap"
+        release_lock "send"
         exit
+}
+
+function release_lock()
+{
+  local locktype=$1
+  local lockfile=${LOCKFILE_PREFIX}.$locktype
+  rm $lockfile 2>/dev/null
+}
+
+# returns 0 on success
+function aquire_lock()
+{
+        # Lockfile handling.
+        locktype=$1
+        lockfile=${LOCKFILE_PREFIX}.$locktype
+
+        if [ -f $lockfile ]; then
+           echo \"$lockfile\" exists, exiting.
+           echo Content:
+           cat $lockfile
+           return 2
+        else
+           echo PID $$ > $lockfile
+           if [ $? -ne 0 ]
+           then
+              echo "Could not create lockfile '$lockfile', aborting"
+              return 99
+           fi
+           date >> $lockfile
+           echo $0 $@ >> $lockfile
+        fi
+        return 0
 }
 
 
 trap clean_up SIGHUP SIGINT SIGTERM
 
-# Lockfile handling.
-if [ -f $LOCKFILE ]; then
-   echo \"$LOCKFILE\" exists, exiting.
-   echo Content:
-   cat $LOCKFILE
-   exit 2
-else
-   echo PID $$ > $LOCKFILE
-   if [ $? -ne 0 ]
-   then
-      echo "Could not create lockfile '$LOCKFILE', aborting"
-      exit 99
-   fi
-   date >> $LOCKFILE
-   echo $0 $@ >> $LOCKFILE
-fi
-# END Lockfile handling.
 
 if [ ! -f $LOGFILE ]; then
   touch $LOGFILE
@@ -97,16 +173,8 @@ case ${interval} in
         # take snapshots for asynchronous DR purposes
         snap_all "1h"
 
-        # send snapshots to failover host
-        for dset in $DATASETS
-        do
-                if [ "$DHOST" == "localhost" -o "$DHOST" == "" ]
-                then
-                        $ZXFER -dFv -R $dset $DEST_DATASET >> $LOGFILE
-                else
-                        $ZXFER -dFv -T root@$DHOST -R $dset $DEST_DATASET >> $LOGFILE
-                fi
-        done
+        send_all
+
         echo "" >> $LOGFILE
 ;;
 
@@ -139,8 +207,8 @@ case ${interval} in
 ;;
 
 'purge')
-        # purge snapshots according to TTL
-        $ZSNAP -v -s -S -d
+        purge_old_snaps
+        echo "" >> $LOGFILE
 ;;
 
 *)
