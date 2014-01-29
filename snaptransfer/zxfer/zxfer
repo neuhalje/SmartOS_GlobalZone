@@ -141,6 +141,7 @@ trailing_slash=0
 
 LZFS=$( which zfs )
 RZFS=$LZFS
+RZFSreceive=$RZFS
 
 
 LCAT=""
@@ -395,18 +396,18 @@ copy_snap() {
     echov "Sending $copysrc to $copydest."
     if [ "$copyprev" = "" ]; then
       if [ $option_n -eq 0 ]; then
-        $LZFS send $copysrc | $RZFS receive $option_F $copydest || \
+        $LZFS send $copysrc |  $RZFSreceive $option_F $copydest || \
           { echo "Error when zfs send/receiving."; beep; exit 1; }
       else
-        echo "$LZFS send $copysrc | $RZFS receive $option_F $copydest"
+        echo "$LZFS send $copysrc |  $RZFSreceive $option_F $copydest"
       fi
     else
       echov "  (incremental to $copyprev.)"
       if [ $option_n -eq 0 ]; then
-        $LZFS send -i $copyprev $copysrc | $RZFS receive $option_F $copydest || \
+        $LZFS send -i $copyprev $copysrc |  $RZFSreceive $option_F $copydest || \
           { echo "Error when zfs send/receiving."; beep; exit 1; }
       else
-        echo "$LZFS send -i $copyprev $copysrc | $RZFS receive $option_F $copydest"
+        echo "$LZFS send -i $copyprev $copysrc |  $RZFSreceive $option_F $copydest"
       fi
     fi
   fi
@@ -1720,6 +1721,15 @@ do
     T)
       RZFS="ssh $OPTARG /sbin/zfs"
       option_T="ssh $OPTARG "
+# Try to find mbuffer, if not found use "cat -" as noop-buffer
+# http://everycity.co.uk/alasdair/2010/07/using-mbuffer-to-speed-up-slow-zfs-send-zfs-receive/
+      MBUFFER="/opt/custom/mbuffer/mbuffer"
+      
+      ssh $OPTARG "test -x $MBUFFER"
+      if [ 0 == $? ]
+      then
+        RZFSreceive="ssh $OPTARG | $MBUFFER -s 128k -m 1G| /sbin/zfs"
+      fi
       ;;
     u)
       option_u=1
