@@ -142,6 +142,7 @@ trailing_slash=0
 LZFS=$( which zfs )
 RZFS=$LZFS
 RZFSreceive=$RZFS
+RZFSreceiveprefix=
 
 
 LCAT=""
@@ -396,18 +397,18 @@ copy_snap() {
     echov "Sending $copysrc to $copydest."
     if [ "$copyprev" = "" ]; then
       if [ $option_n -eq 0 ]; then
-        $LZFS send $copysrc |  $RZFSreceive $option_F $copydest || \
+        $LZFS send $copysrc |  $RZFSreceiveprefix "$RZFSreceive receive $option_F $copydest" || \
           { echo "Error when zfs send/receiving."; beep; exit 1; }
       else
-        echo "$LZFS send $copysrc |  $RZFSreceive $option_F $copydest"
+        echo "$LZFS send $copysrc | $RZFSreceiveprefix \"$RZFSreceive receive $option_F $copydest\""
       fi
     else
       echov "  (incremental to $copyprev.)"
       if [ $option_n -eq 0 ]; then
-        $LZFS send -i $copyprev $copysrc |  $RZFSreceive $option_F $copydest || \
+        $LZFS send -i $copyprev $copysrc |  $RZFSreceiveprefix "$RZFSreceive receive $option_F $copydest" || \
           { echo "Error when zfs send/receiving."; beep; exit 1; }
       else
-        echo "$LZFS send -i $copyprev $copysrc |  $RZFSreceive $option_F $copydest"
+        echo "$LZFS send -i $copyprev $copysrc |  $RZFSreceiveprefix \"$RZFSreceive receive $option_F $copydest\""
       fi
     fi
   fi
@@ -1728,7 +1729,11 @@ do
       ssh $OPTARG "test -x $MBUFFER"
       if [ 0 == $? ]
       then
-        RZFSreceive="ssh $OPTARG | $MBUFFER -s 128k -m 1G| /sbin/zfs"
+        echo "Using  $MBUFFER for receive"
+        RZFSreceiveprefix="ssh $OPTARG"
+        RZFSreceive="$MBUFFER -q -s 128k -m 1G| /sbin/zfs"
+      else
+        echo "mbuffer not found"
       fi
       ;;
     u)
