@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!DOCTYPE service_bundle SYSTEM "/usr/share/lib/xml/dtd/service_bundle.dtd.1">
-<service_bundle type="manifest" name="snaptransfer">
-  <service name="snaptransfer-setupcrontab-atboot" type="service" version="1.0.0">
+<service_bundle type="manifest" name="gz-crontab">
+  <service name="gz-setupcrontab-atboot" type="service" version="1.0.0">
 
     <create_default_instance enabled="true"/>
     <single_instance/>
@@ -21,7 +21,7 @@
     <exec_method
       type="method"
       name="start"
-      exec="/usr/bin/crontab /opt/custom/snapxfer/crontab/snapxfer.crontab"
+      exec="/opt/custom/crontab/installcrontab.sh"
       timeout_seconds="60">
     <method_context>
       <method_credential user="root" group="staff"/>
@@ -58,7 +58,7 @@
 
     <template>
       <common_name>
-        <loctext xml:lang="C">setup the crontab for root so that it runs snapxfer</loctext>
+        <loctext xml:lang="C">setup the crontab for root so that it runs snapxfer et al</loctext>
       </common_name>
     </template>
   </service>
