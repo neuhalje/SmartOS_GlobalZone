@@ -1,0 +1,17 @@
+
+# Set default values for all following accounts.
+defaults
+tls off
+
+
+# The SMTP server of the provider.
+account intranet
+host mail.local.neuhalfen.name
+from sender@example.com
+auth on
+user sender@example.com
+password verysecret
+
+# Set a default account
+account default : intranet
+

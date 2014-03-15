@@ -12,6 +12,10 @@ Copies all from [setup_ssh/setup_ssh/root.ssh](./setup_ssh/setup_ssh/root.ssh/au
 
 __please make sure, that the key in `authorized_keys` is your key, not my key!__
 
+msmtp
+-------
+Provides a custom build of msmtp without SSL support, which would use OpenSSL, which in turn is not available in the GZ. Installed as `/opt/custom/msmtp/msmtp`.
+
 snaptransfer
 --------------
 
