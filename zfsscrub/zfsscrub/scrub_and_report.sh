@@ -68,7 +68,7 @@ MSMTPCONF=/opt/custom/msmtp/msmtp.conf
 function _log {
     DATE="`date +"%Y-%m-%d %H:%M:%S"`"
     # add message to e-mail body
-    BODY="${BODY}$DATE: $1n"
+    BODY="${BODY}$DATE: $1\n"
 
     # output to console if verbose mode
     if [ $VERBOSE = 1 ]; then
@@ -113,5 +113,5 @@ fi
 
 # send e-mail
 if [ $SENDEMAIL = 1 ]; then
-    $PRINTF "From:$FROMnTo:$TOnSubject:$SUBJECTnn$BODY" | $MSMTP --file=$MSMTPCONF -t
+    $PRINTF "From:$FROM\nTo:$TO\nSubject:$SUBJECT\n\n$BODY" | $MSMTP --file=$MSMTPCONF -t
 fi
