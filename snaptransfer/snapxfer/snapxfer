@@ -208,7 +208,7 @@ case ${interval} in
         echo "" >> $LOGFILE
 
         # purge snapshots according to TTL
-        $ZSNAP -s -S -d >> $LOGFILE
+        purge_old_snaps
         echo "" >> $LOGFILE
 ;;
 
