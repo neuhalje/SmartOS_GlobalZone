@@ -127,13 +127,23 @@ function clean_up()
         exit
 }
 
+# has_lock[lockname]: tracks if the lock has been aquired in this process
+# has_locl[lockname] == "true": This lock is owned by this process. 
+# else: not owned
+declare -A  has_lock
+
 function release_lock()
 {
   local locktype=$1
   local lockfile=${LOCKFILE_PREFIX}.$locktype
-  rm $lockfile 2>/dev/null
+  if [[ ${has_lock[$locktype]} == "true" ]]
+  then
+    rm $lockfile 2>/dev/null
+    has_lock[$locktype]="false"
+  fi
 }
 
+# A lock can be aquired multiple times, but needs to be released only once
 # returns 0 on success
 function aquire_lock()
 {
@@ -141,10 +151,16 @@ function aquire_lock()
         locktype=$1
         lockfile=${LOCKFILE_PREFIX}.$locktype
 
+	  if [[ ${has_lock[$locktype]} == "true" ]]
+	  then
+	    return 0
+	  fi
+
         if [ -f $lockfile ]; then
            echo \"$lockfile\" exists, exiting.
            echo Content:
            cat $lockfile
+           has_lock[$locktype]="false"
            return 2
         else
            echo PID $$ > $lockfile
@@ -155,6 +171,7 @@ function aquire_lock()
            fi
            date >> $lockfile
            echo $0 $@ >> $lockfile
+           has_lock[$locktype]="true"
         fi
         return 0
 }
