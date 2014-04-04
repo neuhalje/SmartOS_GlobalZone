@@ -70,7 +70,7 @@ function send_all()
     fi
   done
 
-  release_lock "snap"
+  release_lock "send"
 }
 
 function purge_old_snaps()
@@ -89,6 +89,7 @@ function purge_old_snaps()
   if [[ $lock_error != 0 ]]
   then
     echo "Skipping cleaning up snapshots; other send process is running"
+    release_lock "snap"
     return $lock_error
   fi
         # purge snapshots according to TTL
