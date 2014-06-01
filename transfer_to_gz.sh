@@ -21,5 +21,13 @@ else
    TAR_INCLUDES="${TAR_INCLUDES} -C $FEATURE_ROOT/$FEATURE . "
   done
   tar cvfz - ${TAR_INCLUDES} | ssh root@${REMOTE}  "[ -d /opt/custom ] || mkdir /opt/custom; cd /opt/custom;gtar  xfvz -"
+
+  for FEATURE in "$@"
+  do
+   if [ -f $FEATURE_ROOT/$FEATURE/runonce.sh ]
+   then
+      cat $FEATURE_ROOT/$FEATURE/runonce.sh | tee | ssh -t root@${REMOTE}
+   fi
+  done
 fi
 

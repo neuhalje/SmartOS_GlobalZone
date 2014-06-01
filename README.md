@@ -5,6 +5,24 @@ This repository contains script to automate the setup of [SmartOS Global Zones](
 
 `transfer_to_gz.sh` copies _features_ (subfolders) to `/opt/custom`.  E.g. `./transfer_to_gz.sh 192.168.114.130 ssh_authorized_keys snaptransfer/` copies the content of the folders `ssh_authorized_keys`, and `snaptransfer` to `/opt/custom` on `192.168.114.130`.
 
+```text
+   | transfer_to_gz.sh
+   |
+   +- ipfilter        <-- package name
+      +- ipfilter     <-- gets copied to /opt/custom
+         + ipf.conf
+      +- runonce.sh    <-- will be run after the package contents has been copied over
+```
+   
+
+Provided packages
+=================
+
+ipfilter
+---------
+
+Installs `ipfilter` rules that prohibit any non-ssh network access to the gz.
+
 setup_ssh
 --------------------
 
