@@ -335,7 +335,7 @@ fi
 readonly htime_pattern='([0-9]+y)?([0-9]+m)?([0-9]+w)?([0-9]+d)?([0-9]+h)?([0-9]+M)?([0-9]+[s]?)?'
 
 
-is_true $dry_run && zfs_list=`$zfs_cmd list -H -o name`
+is_true $dry_run && zfs_list=`$zfs_cmd list -H -o name -s name`
 ntime=`date "+$tfrmt"`
 while [ "$1" ]; do
     while [ "$1" = '-r' -o "$1" = '-R' -o "$1" = '-a' -o "$1" = '-p' -o "$1" = '-P' -o "$1" = '-D' ]; do
@@ -405,9 +405,9 @@ prefxes=`echo "$prefxes" | sed -e 's/^\|//'`
 if is_true $delete_snapshots || [ $force_delete_snapshots_age -ne -1 ]; then
 
     if is_false $zpool28fix; then
-        zfs_snapshots=`$zfs_cmd list -H -o name -t snapshot | $GREP -E -e "^.*@(${prefxes})?${date_pattern}--${htime_pattern}$" | sed -e 's#/.*@#@#'`
+        zfs_snapshots=`$zfs_cmd list -H -o name -s name -t snapshot | $GREP -E -e "^.*@(${prefxes})?${date_pattern}--${htime_pattern}$" | sed -e 's#/.*@#@#'`
     else
-        zfs_snapshots=`$zfs_cmd list -H -o name -t snapshot | $GREP -E -e "^.*@(${prefxes})?${date_pattern}--${htime_pattern}$"`
+        zfs_snapshots=`$zfs_cmd list -H -o name -s name -t snapshot | $GREP -E -e "^.*@(${prefxes})?${date_pattern}--${htime_pattern}$"`
     fi
 
     current_time=`date +%s`
@@ -434,14 +434,14 @@ fi
 
 # delete all snap
 if [ "$delete_specific_fs_snapshots" != '' ]; then
-    rm_snapshots=`$zfs_cmd list -H -o name -t snapshot | $GREP -E -e "^($(echo "$delete_specific_fs_snapshots" | tr ' ' '|'))@(${prefxes})?${date_pattern}--${htime_pattern}$"`
+    rm_snapshots=`$zfs_cmd list -H -o name -s name -t snapshot | $GREP -E -e "^($(echo "$delete_specific_fs_snapshots" | tr ' ' '|'))@(${prefxes})?${date_pattern}--${htime_pattern}$"`
     for i in $rm_snapshots; do
         rm_zfs_snapshot $i
     done
 fi
 
 if [ "$delete_specific_fs_snapshots_recursively" != '' ]; then
-    rm_snapshots=`$zfs_cmd list -H -o name -t snapshot | $GREP -E -e "^($(echo "$delete_specific_fs_snapshots_recursively" | tr ' ' '|'))@(${prefxes})?${date_pattern}--${htime_pattern}$"`
+    rm_snapshots=`$zfs_cmd list -H -o name -s name -t snapshot | $GREP -E -e "^($(echo "$delete_specific_fs_snapshots_recursively" | tr ' ' '|'))@(${prefxes})?${date_pattern}--${htime_pattern}$"`
     for i in $rm_snapshots; do
         rm_zfs_snapshot -r $i
     done
