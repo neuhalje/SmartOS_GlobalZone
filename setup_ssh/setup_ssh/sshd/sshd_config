@@ -1,24 +1,12 @@
 Protocol 2
 Port 22
 
-# Don't use reverse DNS for connecting clients
 LookupClientHostnames no
 VerifyReverseMapping no
-
 KbdInteractiveAuthentication no
-
-
-# The default listen address is all interfaces, this may need to be changed
-# if you wish to restrict the interfaces sshd listens on for a multi homed host.
-# Multiple ListenAddress entries are allowed.
-
 # IPv4 only
-#ListenAddress 172.20.0.93
+ListenAddress 0.0.0.0
 
-# If port forwarding is enabled (default), specify if the server can bind to
-# INADDR_ANY.
-# This allows the local port forwarding to work when connections are received
-# from any remote host.
 GatewayPorts no
 
 # X11 tunneling options
@@ -39,7 +27,11 @@ LogLevel info
 # Host private key files
 # Must be on a local disk and readable only by the root user (root:sys 600).
 HostKey /var/ssh/ssh_host_rsa_key
-HostKey /var/ssh/ssh_host_dsa_key
+#HostKey /var/ssh/ssh_host_ed25519_key
+
+Ciphers aes128-ctr,aes192-ctr,aes256-ctr
+MACs hmac-sha1
+
 
 # Length of the server key
 # Default 768, Minimum 512
